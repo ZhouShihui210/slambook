@@ -95,7 +95,7 @@ public:
         return true;
     }
 
-
+    // 计算该边的Jacobian矩阵
     virtual void linearizeOplus() override
     {
         // use numeric Jacobians
@@ -107,15 +107,18 @@ public:
         const VertexCameraBAL* cam = static_cast<const VertexCameraBAL*> ( vertex ( 0 ) );
         const VertexPointBAL* point = static_cast<const VertexPointBAL*> ( vertex ( 1 ) );
         typedef ceres::internal::AutoDiff<EdgeObservationBAL, double, VertexCameraBAL::Dimension, VertexPointBAL::Dimension> BalAutoDiff;
-
+        // 定义两个Jacobian矩阵
         Eigen::Matrix<double, Dimension, VertexCameraBAL::Dimension, Eigen::RowMajor> dError_dCamera;
         Eigen::Matrix<double, Dimension, VertexPointBAL::Dimension, Eigen::RowMajor> dError_dPoint;
+        // 定义指向连接顶点估计值的指针数组
         double *parameters[] = { const_cast<double*> ( cam->estimate().data() ), const_cast<double*> ( point->estimate().data() ) };
         double *jacobians[] = { dError_dCamera.data(), dError_dPoint.data() };
-        double value[Dimension];
+        double value[Dimension]; // 定义误差数组
+        // 使用BalAutoDiff的Differentiate方法计算Jacobian矩阵
         bool diffState = BalAutoDiff::Differentiate ( *this, parameters, Dimension, value, jacobians );
 
         // copy over the Jacobians (convert row-major -> column-major)
+        // 拷贝Jacobian矩阵，并将行优先的矩阵转换为列优先的矩阵
         if ( diffState )
         {
             _jacobianOplusXi = dError_dCamera;
